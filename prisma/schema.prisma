@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// configurações para estrutura de BD relacional na linguagem do prisma
+
+// slug = identificação do usuário 
+model User {
+  slug     String      @id
+  email    String      @unique
+  password String
+  name     String
+  avatar   String      @default("default.jpg")
+  cover    String      @default("default.jpg") //cover =  capa
+  bio      String?
+  link     String?
+  Tweets   Tweet[] // relação de tweets aplicada ao usuário
+  likes    TweetLike[] // relação dos likes aplicada ao usuário
+}
+
+model Tweet {
+  id        Int         @id @default(autoincrement())
+  userSlug  String // usuário que está logado
+  body      String
+  image     String?
+  createdAt DateTime    @default(now())
+  // answer = responder   
+  // tweet original = 1 quando o fizer
+  // ou tweet resposta de outro tweet = 2
+  answerOf  Int         @default(0) // 0 tweet ainda não feito
+  // relação do tweet com o usuário
+  user      User        @relation(fields: [userSlug], references: [slug])
+  likes     TweetLike[] // relação dos likes plicadao ao tweet
+}
+
+model TweetLike {
+  id       Int    @id @default(autoincrement())
+  userSlug String
+  tweetId  Int
+  user     User   @relation(fields: [userSlug], references: [slug])
+  tweet    Tweet  @relation(fields: [tweetId], references: [id])
+}
+
+model Follow {
+  id        Int    @id @default(autoincrement())
+  user1Slug String // estou seguindo
+  user2Slug String // me seguem
+}
+
+// Quantas vezes a # foi mencionada e o ranking
+model Trend {
+  id        Int      @id @default(autoincrement())
+  hashtag   String
+  counter   Int      @default(1)
+  updatedAt DateTime @default(now())
+}
