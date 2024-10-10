@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { ExtendedRequest } from "../types/extended-request";
 import { addTweetSchema } from "../schemas/add-tweet";
-import { createTweet, findTweet } from "../services/tweet";
+import { checkIfTweetLikeByUser, createTweet, findAnswersFromTweet, findTweet, unlikeTweet, likeTweet } from "../services/tweet";
 import { addHashtag } from "../services/trend";
 
 // ExtendedRequest = para dar acesso ao usuário que está logado
@@ -63,3 +63,45 @@ export const getTweet = async (req: ExtendedRequest, res: Response) => {
     res.json({ tweet })
 
 }
+
+// buscando as answers (respostas)
+
+export const getAnswers = async (req: ExtendedRequest, res: Response) => {
+    // pra receber o /:id => dinâmico que está na URL, ele está em params
+    const { id } = req.params // o id (dinâmico) está em params
+
+    const answers = await findAnswersFromTweet(parseInt(id)) // id vem como string, altero para inteiro
+
+    res.json({ answers })
+}
+
+// CRIAR/REMOVER like
+export const likeToggle = async (req: ExtendedRequest, res: Response) => {
+    const { id } = req.params // o id (dinâmico) está em params
+    const liked = await checkIfTweetLikeByUser(
+        req.userSlug as string, // usuário logado
+        parseInt(id) // id do usuário
+    )
+
+    if (liked) {
+        // unlike
+        unlikeTweet(
+            req.userSlug as string, // usuário logado
+            parseInt(id) // id do usuário
+        )
+    } else {
+        // like
+        likeTweet(
+            req.userSlug as string, // usuário logado
+            parseInt(id) // id do usuário
+        )
+    }
+
+    res.json({})
+
+
+}
+
+// export function followToggle(arg0: string, verifyJWT: (req: ExtendedRequest, res: Response, next: import("express").NextFunction) => void, followToggle: any) {
+//     throw new Error('Function not implemented.');
+// }

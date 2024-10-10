@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client"
 import { prisma } from "../utils/prisma"
 import { getPublicURL } from "../utils/url"
+import slug from "slug"
 
 // Usuários
 
@@ -54,3 +55,83 @@ export const createUser = async (data: Prisma.UserCreateInput) => {
     }
 
 }
+
+// pegar as contagens de quem o usuário está seguindo (following)
+export const getUserFollowingCount = async (slug: string) => {
+    const count = await prisma.follow.count({ // contar quantos registros tem
+        // user1Slug = tomou a ação de seguir
+        where: { user1Slug: slug } // buscar quantas pessoas o usuário segue
+    })
+
+    return count // retornará a quantidade
+}
+
+// pegar as informações de quantas pessoas seguem aquele usuário (followers)
+export const getUserFollowersCount = async (slug: string) => {
+    const count = await prisma.follow.count({ // contar quantos registros tem
+        // user2Slug = pessoa que segue o usuário
+        where: { user2Slug: slug } // buscar quantas pessoas estão seguindo o usuário
+    })
+
+    return count // retornará a quantidade
+}
+
+// Quantos tweets esse usuário fez
+export const getUserTweetCount = async (slug: string) => {
+    const count = await prisma.tweet.count({ // contar quantos registros tem
+        where: { userSlug: slug } // buscar quantos tweets o usuário fez
+    })
+
+    return count // retornará a quantidade
+}
+
+// verificando se um usuário segue o outro
+export const checkIfFollows = async (user1Slug: string, user2Slug: string) => {
+    const follows = await prisma.follow.findFirst({
+        where: { user1Slug, user2Slug }
+    })
+
+    // se achou algum registro, então é pq segue, caso contrário, não segue
+    return follows ? true : false
+}
+
+// SEGUIR
+export const follow = async (user1Slug: string, user2Slug: string) => {
+    await prisma.follow.create({ // será criado um registro
+        data: { user1Slug, user2Slug } // de seguir
+    })
+
+}
+
+
+// DEIXAR DE SEGUIR OU DESSEGUIR
+
+export const unfollow = async (user1Slug: string, user2Slug: string) => {
+    await prisma.follow.deleteMany({
+        where: { user1Slug, user2Slug } // onde o usuário 1 seguir o 2, DELETAR o seguir
+    })
+}
+
+// ALTERAR OS DADOS DO USUÁRIO
+// Prisma.UserUpdateInput = campos que terá os dados que serão alterados...
+export const updateUserInfo = async (slug: string, data: Prisma.UserUpdateInput) => {
+    await prisma.user.update({ // informações que serão alteradas
+        where: { slug }, // qual usuário quero trocar
+        data // quais informações serão trocadas
+    })
+}
+
+// pegando a lista de usuários que eu sigo (usuário logado)
+export const getUserFollowing = async (slug: string) => {
+    const following = [] // é uma lista 
+    const reqFollow = await prisma.follow.findMany({ // pegando os usuários 
+        select: { user2Slug: true },
+        where: { user1Slug: slug } // user 1 = slug (eu sigo)
+    })
+
+    for (let reqItem of reqFollow) {
+        following.push(reqItem.user2Slug) // adicionando na lista
+    }
+
+    return following
+} 
