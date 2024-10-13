@@ -20,3 +20,20 @@ export const addHashtag = async (hashtag: string) => {
         })
     }
 }
+
+// FUNÇÃO PARA PEGAR OS TRENDS
+export const getTrending = async () => {
+    const trends = await prisma.trend.findMany({
+        select: {
+            hashtag: true,
+            counter: true
+        },
+        // poderá ser colocado aqui um where para filtrar pela data
+        orderBy: {
+            counter: 'desc'
+        },
+        take: 4 // só pego no máximo 4 hashtags dentro as muitas
+    })
+
+    return trends
+}

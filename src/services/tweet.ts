@@ -161,9 +161,49 @@ export const findTweetFeed = async (following: string[], currentPage: number, pe
 
     })
 
+    // adiciona URL no avatar
     for (let tweetIndex in tweets) { // ir de um em um para colocar o avatar
         tweets[tweetIndex].user.avatar = getPublicURL(tweets[tweetIndex].user.avatar)
     }
 
     return tweets
+}
+
+// função que irá buscar os tweets
+// irá buscar os tweets pelo que está no body
+export const findTweetsByBody = async (bodyContains: string, currentPage: number, perPAge: number) => {
+    const tweets = await prisma.tweet.findMany({
+        include: { // inclua na requisição
+            user: {
+                select: { // selecione 
+                    name: true,
+                    avatar: true,
+                    slug: true
+                }
+            },
+            likes: {
+                select: {
+                    userSlug: true  // quem deu o like
+                }
+            }
+        },
+        where: {
+            body: {
+                contains: bodyContains,
+                mode: 'insensitive' // na pesquisa não fará diferença se foi digitado em maiúscula ou minúscula
+            },
+            answerOf: 0 // para que não busque resposta de tweet, apenas tweets originais
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: currentPage * perPAge,
+        take: perPAge
+    })
+
+
+    // adiciona URL no avatar
+    for (let tweetIndex in tweets) { // ir de um em um para colocar o avatar
+        tweets[tweetIndex].user.avatar = getPublicURL(tweets[tweetIndex].user.avatar)
+    }
+
+    return tweets // retorna o resultado da busca
 }

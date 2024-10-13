@@ -134,4 +134,43 @@ export const getUserFollowing = async (slug: string) => {
     }
 
     return following
-} 
+}
+
+// CRIANDO A FUNÇÃO DE SUGESTÃO DE USUÁRIOS A SEGUIR
+export const getUserSuggestions = async (slug: string) => {
+    // quais são os usuários que eu sigo?
+    const following = await getUserFollowing(slug) // pegando os usuários que eu sigo
+    // followingPlusMe = seguidores mais eu 
+    const followingPlusMe = [...following, slug] // LISTA QUE NÃO QUERO UTILIZAR (pegando os meus seguidores mais EU)
+
+    // preciso pegar uma lista de usuários de forma aleatória
+    // O PRISMA não possui uma forma de buscar o usuário aleatoriamente
+    // vou ter que criar uma QUERY DIRETA (CRUA) QUE ACESSARÁ O BANCO DE DADOS
+
+    // type Suggestions = Prisma.UserGetPayload<Prisma.UserDefaultArgs> // pega todos os campos do user
+    // método abaixo pega apenas os campos listados
+    type Suggestions = Pick<
+        Prisma.UserGetPayload<Prisma.UserDefaultArgs>,
+        "name" | "avatar" | "slug"
+    >
+
+    // aqui terá apenas name, avatar, slug, conforme o filtro feito com PICK
+    const suggestions: Suggestions[] = await prisma.$queryRaw` 
+        SELECT /* pegue */
+            name, avatar, slug  
+        FROM "User"
+        WHERE /* onde */
+            slug NOT IN (${followingPlusMe.join(',')})  /* pegue os que NÃO estão nessa lista */
+        ORDER BY RANDOM() /* ALEATORIAMENTE */
+        LIMIT 2 /* APENAS 2 */
+    `
+    // O nome da função de aleatoriedade no POSTGRE é RANDOM()
+    // Se fosse no mysql seria RAND()
+
+    // pegando o avatar e organizar a URL 
+    for (let sugIndex in suggestions) {
+        suggestions[sugIndex].avatar = getPublicURL(suggestions[sugIndex].avatar)
+    }
+
+    return suggestions
+}

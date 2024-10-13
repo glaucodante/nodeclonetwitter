@@ -4,6 +4,9 @@ import * as authController from '../controllers/auth'
 import * as tweetController from '../controllers/tweet'
 import * as userController from '../controllers/user'
 import * as feedController from '../controllers/feed'
+import * as searchController from '../controllers/search'
+import * as trendController from '../controllers/trend'
+import * as suggestionController from '../controllers/suggestion'
 import { verifyJWT } from '../utils/jwt' // middleware (rota privada)
 
 export const mainRouter = Router()
@@ -35,5 +38,6 @@ mainRouter.put('/user', verifyJWT, userController.updateUser) // alterar informa
 
 // GESTÃO DO SISTEMA
 mainRouter.get('/feed', verifyJWT, feedController.getFeed) // consultando o feed
-// mainRouter.get('/search') // busca da pesquisa
-// mainRouter.get('/trending') // buscas # (hashtag)
+mainRouter.get('/search', verifyJWT, searchController.searchTweets) // busca da pesquisa
+mainRouter.get('/trending', verifyJWT, trendController.getTrends) // buscas # (hashtag)
+mainRouter.get('/suggestions', verifyJWT, suggestionController.getSuggestions) // sugestões de usuário a seguir
